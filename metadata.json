@@ -1,0 +1,6 @@
+{
+  "name": "Nilpha Social",
+  "description": "A modern social networking platform designed for Bangladesh, featuring clean navigation, localized Bengali and English support, rich feeds, games, and community discovery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
