@@ -9,6 +9,7 @@ export const bn = {
   navCommunities: 'কমিউনিটি',
   navGames: 'গেমস',
   navMessages: 'বার্তা',
+  navLive: 'লাইভ সম্প্রচার',
   navNotifications: 'নোটিফিকেশন',
   navWallet: 'ওয়ালেট',
   navBookmarks: 'বুকমার্কস',

@@ -235,3 +235,85 @@ It provisions:
 - **RLS**: Pages publicly viewable. Admins and editors can update page details. Authenticated users can follow and unfollow pages.
 - **Trigger**: Automatic creator membership added as page `admin`.
 
+---
+
+## 9. Part 5 Database Architecture: Messaging, Audio/Video Calling & Live Streaming
+
+The Part 5 migration script is located at:
+`supabase/migrations/20261021030000_create_messaging_calls_streaming_tables.sql`
+
+It provisions:
+
+### 1. `public.conversations`
+- `id` (UUID Primary Key)
+- `type` ('direct' | 'group')
+- `title` (TEXT, optional for groups)
+- `avatar_url` (TEXT, optional)
+- `created_by` (UUID references `public.profiles(id)`)
+- `last_message_at` (TIMESTAMPTZ, auto-updated on new message)
+- `created_at`, `updated_at` (TIMESTAMPTZ)
+- **RLS**: Only conversation members can select and view conversations. Only authenticated members can create conversations. Admins can update.
+
+### 2. `public.conversation_members`
+- `id` (UUID Primary Key)
+- `conversation_id` (UUID references `public.conversations(id)` on delete cascade)
+- `user_id` (UUID references `public.profiles(id)` on delete cascade)
+- `role` ('admin' | 'member')
+- `muted` (BOOLEAN, default false)
+- `notifications_enabled` (BOOLEAN, default true)
+- `last_read_at` (TIMESTAMPTZ)
+- `joined_at` (TIMESTAMPTZ)
+- Unique constraint: `(conversation_id, user_id)`
+- **RLS**: Members can read members of their own conversations. Users can update their own settings (muted, last_read_at). Admins or the user themselves can remove membership.
+
+### 3. `public.messages`
+- `id` (UUID Primary Key)
+- `conversation_id` (UUID references `public.conversations(id)` on delete cascade)
+- `sender_id` (UUID references `public.profiles(id)`)
+- `content` (TEXT)
+- `message_type` ('text' | 'image' | 'file' | 'system' | 'call_event')
+- `reply_to_id` (UUID references `public.messages(id)` on delete set null)
+- `is_edited` (BOOLEAN, default false)
+- `deleted_at` (TIMESTAMPTZ, soft delete)
+- `metadata` (JSONB)
+- `created_at`, `updated_at` (TIMESTAMPTZ)
+- **RLS**: Only conversation members can read messages. Senders can insert messages (enforcing block constraints: blocked users cannot send messages). Senders can edit or soft-delete only their own messages.
+- **Trigger**: Automatic update of `conversations.last_message_at` on every insert.
+
+### 4. `public.message_attachments`
+- `id` (UUID Primary Key)
+- `message_id` (UUID references `public.messages(id)` on delete cascade)
+- `file_url`, `file_name`, `file_size`, `file_type` (TEXT / BIGINT)
+- **RLS**: Viewable only by members of the message's conversation. Insertable by the message sender.
+
+### 5. `public.message_reactions`
+- `id` (UUID Primary Key)
+- `message_id` (UUID references `public.messages(id)` on delete cascade)
+- `user_id` (UUID references `public.profiles(id)` on delete cascade)
+- `reaction` (TEXT emoji)
+- Unique constraint: `(message_id, user_id, reaction)`
+- **RLS**: Viewable by conversation members. Users can add or delete only their own reactions.
+
+### 6. `public.call_sessions` & `public.call_participants`
+- `call_sessions`: `id`, `conversation_id`, `initiator_id`, `call_type` ('audio' | 'video'), `status` ('initiating' | 'ringing' | 'active' | 'ended' | 'declined' | 'missed' | 'failed'), `room_id`, `provider`, `started_at`, `ended_at`.
+- `call_participants`: `call_session_id`, `user_id`, `role` ('host' | 'participant'), `status` ('invited' | 'ringing' | 'connected' | 'left' | 'declined' | 'missed'), `joined_at`, `left_at`.
+- **RLS**: Authorized participants can view and update their own participant records and call status.
+
+### 7. `public.live_streams` & `public.live_stream_comments`
+- `live_streams`: `id`, `host_id`, `title`, `description`, `visibility` ('public' | 'followers_only' | 'private'), `status` ('preview' | 'live' | 'ended'), `viewer_count`, `started_at`, `ended_at`.
+- `live_stream_comments`: `stream_id`, `user_id`, `content`, `is_pinned`, `is_deleted`.
+- `live_stream_moderation_actions`: `stream_id`, `moderator_id`, `target_user_id`, `action_type` ('block_viewer' | 'remove_comment' | 'report'), `reason`.
+- **RLS**: Public streams readable by everyone. Hosts can update stream status. Viewers can send comments (unless blocked by host moderation actions). Hosts can pin or delete comments and block viewers.
+
+### 8. Supabase Storage: `message-attachments` Bucket
+- **Bucket**: `message-attachments` (50MB file size limit, private bucket)
+- **RLS**: Scoped upload and select for authenticated conversation members.
+
+### 9. Calling Provider Setup (LiveKit SFU / Agora / WebRTC)
+- **Default Development Mode**: Real browser WebRTC media capture via `navigator.mediaDevices.getUserMedia` with audio & video tracks, mute/unmute, and camera toggle.
+- **Production Scalability (LiveKit SFU)**:
+  1. Create a LiveKit project at [LiveKit Cloud](https://livekit.io).
+  2. Set `VITE_CALLING_PROVIDER="livekit"` and `VITE_LIVEKIT_URL="wss://your-livekit.livekit.cloud"` in client env.
+  3. Deploy a Supabase Edge Function `generate-livekit-token` with server-side `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` to mint short-lived join tokens. Never expose secrets in client code.
+
+

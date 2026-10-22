@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   User,
   Settings,
@@ -23,6 +23,9 @@ import {
   MoreVertical,
   Ban,
   Loader2,
+  MessageSquare,
+  Phone,
+  Video,
 } from 'lucide-react';
 import { PageHeader } from '../components/common/PageHeader';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
@@ -30,7 +33,9 @@ import { SupabaseConfigNotice } from '../components/auth/SupabaseConfigNotice';
 import { UserListModal } from '../components/relationships/UserListModal';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useCall } from '../context/CallContext';
 import { relationshipService } from '../services/relationshipService';
+import { messagingService } from '../services/messagingService';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import {
   RelationshipCounts,
@@ -40,8 +45,10 @@ import {
 
 export const ProfilePage: React.FC = () => {
   const { username: routeUsername } = useParams<{ username?: string }>();
+  const navigate = useNavigate();
   const { language, t } = useLanguage();
   const { user, profile: myProfile, isConfigured } = useAuth();
+  const { startCall } = useCall();
 
   const [targetProfile, setTargetProfile] = useState<any>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
@@ -379,6 +386,50 @@ export const ProfilePage: React.FC = () => {
                         <span>ফলো করুন</span>
                       </>
                     )}
+                  </button>
+
+                  {/* Send Message */}
+                  <button
+                    onClick={async () => {
+                      if (!targetProfile) return;
+                      try {
+                        const conv = await messagingService.createDirectConversation(
+                          targetProfile.id,
+                          currentUserId,
+                          targetProfile
+                        );
+                        navigate(`/messages/${conv.id}`);
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-blue-50 dark:bg-blue-900/30 text-[#155EEF] dark:text-blue-400 hover:bg-blue-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    title="বার্তা পাঠান"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>বার্তা</span>
+                  </button>
+
+                  {/* Audio Call */}
+                  <button
+                    onClick={() => {
+                      if (targetProfile) startCall(targetProfile, 'audio');
+                    }}
+                    className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    title="অডিও কল করুন"
+                  >
+                    <Phone className="w-4 h-4" />
+                  </button>
+
+                  {/* Video Call */}
+                  <button
+                    onClick={() => {
+                      if (targetProfile) startCall(targetProfile, 'video');
+                    }}
+                    className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    title="ভিডিও কল করুন"
+                  >
+                    <Video className="w-4 h-4" />
                   </button>
                 </>
               )}

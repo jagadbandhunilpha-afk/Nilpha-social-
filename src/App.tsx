@@ -36,13 +36,19 @@ import { PostDetailPage } from './pages/PostDetailPage';
 // Part 4: Friends & Social Graph
 import { FriendsPage } from './pages/FriendsPage';
 
+// Part 5: Real-Time Calling & Live Streaming
+import { CallProvider } from './context/CallContext';
+import { LiveStreamPage } from './pages/LiveStreamPage';
+import { LiveWatchPage } from './pages/LiveWatchPage';
+
 export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
         <NoticeProvider>
           <AuthProvider>
-            <BrowserRouter>
+            <CallProvider>
+              <BrowserRouter>
               <Routes>
                 <Route element={<AppLayout />}>
                   {/* Public App Shell Routes */}
@@ -51,6 +57,9 @@ export default function App() {
                   <Route path="/communities" element={<CommunitiesPage />} />
                   <Route path="/games" element={<GamesPage />} />
                   <Route path="/messages" element={<MessagesPage />} />
+                  <Route path="/messages/:conversationId" element={<MessagesPage />} />
+                  <Route path="/live" element={<LiveStreamPage />} />
+                  <Route path="/live/:streamId" element={<LiveWatchPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
                   <Route path="/wallet" element={<WalletPage />} />
                   <Route path="/friends" element={<FriendsPage />} />
@@ -74,7 +83,8 @@ export default function App() {
                 </Route>
               </Routes>
             </BrowserRouter>
-          </AuthProvider>
+          </CallProvider>
+        </AuthProvider>
         </NoticeProvider>
       </LanguageProvider>
     </ThemeProvider>

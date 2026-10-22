@@ -9,6 +9,7 @@ export const en = {
   navCommunities: 'Communities',
   navGames: 'Games',
   navMessages: 'Messages',
+  navLive: 'Live Streams',
   navNotifications: 'Notifications',
   navWallet: 'Wallet',
   navBookmarks: 'Bookmarks',

@@ -183,7 +183,7 @@ export const FriendsPage: React.FC = () => {
             ? 'আপনার বন্ধু তালিকা, অনুসারী, ফলোয়িং এবং ফ্রেন্ড রিকোয়েস্ট ম্যানেজ করুন'
             : 'Manage friends, follow relationships, and connection requests'
         }
-        badge={
+        action={
           <span className="text-xs font-bold text-[#155EEF] dark:text-[#38BDF8] flex items-center gap-1">
             <Users className="w-3.5 h-3.5" />
             <span>পার্ট ৪ নেটওয়ার্ক</span>

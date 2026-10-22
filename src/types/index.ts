@@ -257,3 +257,183 @@ export interface CreatePageInput {
   cover_url?: string;
 }
 
+// ============================================================================
+// Part 5: Real-Time Messaging Types
+// ============================================================================
+export type ConversationType = 'direct' | 'group';
+export type ConversationRole = 'admin' | 'member';
+
+export interface ConversationMember {
+  id: string;
+  conversation_id: string;
+  user_id: string;
+  role: ConversationRole;
+  muted: boolean;
+  notifications_enabled: boolean;
+  last_read_at: string;
+  joined_at: string;
+  profile?: SocialUser;
+}
+
+export interface Conversation {
+  id: string;
+  type: ConversationType;
+  title?: string | null;
+  avatar_url?: string | null;
+  created_by?: string | null;
+  last_message_at: string;
+  created_at: string;
+  updated_at?: string;
+  members: ConversationMember[];
+  lastMessage?: ChatMessage | null;
+  unreadCount?: number;
+  isOnline?: boolean;
+}
+
+export type MessageType = 'text' | 'image' | 'file' | 'system' | 'call_event';
+export type MessageDeliveryStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+
+export interface MessageAttachment {
+  id: string;
+  message_id: string;
+  file_url: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  created_at?: string;
+}
+
+export interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  reaction: string;
+  created_at?: string;
+  user?: SocialUser;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  message_type: MessageType;
+  reply_to_id?: string | null;
+  reply_to_message?: ChatMessage | null;
+  is_edited: boolean;
+  deleted_at?: string | null;
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+  sender?: SocialUser;
+  attachments?: MessageAttachment[];
+  reactions?: MessageReaction[];
+  deliveryStatus?: MessageDeliveryStatus;
+  clientTempId?: string;
+}
+
+// ============================================================================
+// Part 5: Audio & Video Calling Types
+// ============================================================================
+export type CallType = 'audio' | 'video';
+export type CallStatus =
+  | 'initiating'
+  | 'ringing'
+  | 'active'
+  | 'ended'
+  | 'declined'
+  | 'missed'
+  | 'failed';
+
+export type ParticipantCallStatus =
+  | 'invited'
+  | 'ringing'
+  | 'connected'
+  | 'left'
+  | 'declined'
+  | 'missed';
+
+export interface CallParticipant {
+  id: string;
+  call_session_id: string;
+  user_id: string;
+  role: 'host' | 'participant';
+  status: ParticipantCallStatus;
+  joined_at?: string | null;
+  left_at?: string | null;
+  profile?: SocialUser;
+  isMuted?: boolean;
+  isVideoOff?: boolean;
+}
+
+export interface CallSession {
+  id: string;
+  conversation_id?: string | null;
+  initiator_id: string;
+  call_type: CallType;
+  status: CallStatus;
+  room_id: string;
+  provider: 'webrtc' | 'livekit' | 'daily' | 'agora';
+  started_at?: string | null;
+  ended_at?: string | null;
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+  initiator?: SocialUser;
+  participants: CallParticipant[];
+}
+
+export interface CallMediaState {
+  isMuted: boolean;
+  isVideoOff: boolean;
+  facingMode: 'user' | 'environment';
+  localStream: MediaStream | null;
+  durationSeconds: number;
+  networkQuality: 'good' | 'poor' | 'reconnecting';
+  hasHardwarePermissions: boolean;
+  permissionError?: string | null;
+}
+
+// ============================================================================
+// Part 5: Live Streaming Types
+// ============================================================================
+export type LiveStreamVisibility = 'public' | 'followers_only' | 'private';
+export type LiveStreamStatus = 'preview' | 'live' | 'ended';
+
+export interface LiveStream {
+  id: string;
+  host_id: string;
+  title: string;
+  description?: string | null;
+  visibility: LiveStreamVisibility;
+  status: LiveStreamStatus;
+  viewer_count: number;
+  started_at?: string | null;
+  ended_at?: string | null;
+  metadata?: Record<string, any>;
+  created_at: string;
+  updated_at?: string;
+  host?: SocialUser;
+}
+
+export interface LiveStreamComment {
+  id: string;
+  stream_id: string;
+  user_id: string;
+  content: string;
+  is_pinned: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  user?: SocialUser;
+}
+
+export interface StreamModerationAction {
+  id: string;
+  stream_id: string;
+  moderator_id: string;
+  target_user_id: string;
+  action_type: 'block_viewer' | 'remove_comment' | 'report';
+  reason?: string | null;
+  created_at: string;
+}
+

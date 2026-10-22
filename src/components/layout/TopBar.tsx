@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, X, Bell, MessageSquare, Compass, Shield, User, LogIn, LogOut, UserPlus, Bookmark, Users } from 'lucide-react';
+import { Search, X, Bell, MessageSquare, Compass, Shield, User, LogIn, LogOut, UserPlus, Bookmark, Users, Radio } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { ThemeToggle } from '../common/ThemeToggle';
@@ -179,6 +179,15 @@ export const TopBar: React.FC = () => {
                   >
                     <Users className="w-4 h-4 text-slate-400" />
                     <span>{t('navFriends')}</span>
+                  </Link>
+
+                  <Link
+                    to="/live"
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                  >
+                    <Radio className="w-4 h-4 text-red-500" />
+                    <span>{t('navLive')}</span>
                   </Link>
 
                   <Link

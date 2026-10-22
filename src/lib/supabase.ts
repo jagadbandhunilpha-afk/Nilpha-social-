@@ -1,7 +1,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || (typeof process !== 'undefined' ? process.env : {}) as any;
+const supabaseUrl = env?.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = env?.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 // Validate configuration
 export const isSupabaseConfigured = Boolean(
