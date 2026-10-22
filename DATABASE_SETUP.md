@@ -316,4 +316,61 @@ It provisions:
   2. Set `VITE_CALLING_PROVIDER="livekit"` and `VITE_LIVEKIT_URL="wss://your-livekit.livekit.cloud"` in client env.
   3. Deploy a Supabase Edge Function `generate-livekit-token` with server-side `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` to mint short-lived join tokens. Never expose secrets in client code.
 
+---
+
+## 10. Nilpha Social — Part 6: Games Hub, Demo Coins Wallet, Rewards, Challenges & Referrals
+
+The Part 6 database migration is located at:
+`supabase/migrations/20261022000000_create_games_wallet_rewards_tables.sql`
+
+### Non-Cash Demo Currency Policy
+- All coins are non-cash, non-transferable demo tokens.
+- They cannot be purchased with real money, withdrawn to banks or mobile money, or converted to cash.
+- There are no deposits, gambling, or real-money payouts.
+
+### Database Tables:
+1. `public.demo_coin_wallets`:
+   - `user_id` (PRIMARY KEY REFERENCES auth.users)
+   - `balance` (BIGINT NOT NULL DEFAULT 200 CHECK (balance >= 0))
+   - `total_earned` (BIGINT NOT NULL DEFAULT 200)
+   - `total_spent` (BIGINT NOT NULL DEFAULT 0)
+   - `initial_grant_given` (BOOLEAN NOT NULL DEFAULT true)
+   - `created_at`, `updated_at`
+
+2. `public.demo_coin_transactions`:
+   - Auditable append-only ledger with `id`, `user_id`, `amount` (integer), `balance_after`, `transaction_type`, `reason`, `idempotency_key` (UNIQUE), `reference_id`, `created_at`.
+   - Idempotency key prevents replay attacks and duplicate reward claims.
+
+3. `public.game_sessions`:
+   - Tracks mini game sessions: `user_id`, `game_id`, `score`, `duration_seconds`, `coins_rewarded`, `session_data`, `created_at`.
+
+4. `public.daily_rewards_claims`:
+   - Tracks 7-day streak calendar: `user_id`, `claim_date` (UNIQUE per user per calendar day), `streak_count`, `day_number`, `reward_coins`, `created_at`.
+
+5. `public.user_challenges`:
+   - Daily and weekly missions with `target`, `progress`, `reward_coins`, `is_claimed`, `expires_at`.
+
+6. `public.user_referrals`:
+   - Unique referral codes (`NILPHA-XXXXXX`) and invite records.
+   - Enforces `referrer_id <> referee_id` (no self-referral) and unique referee constraint.
+
+7. `public.user_achievements`:
+   - Tracks milestone progress and badge unlocks with demo coin rewards.
+
+8. `public.game_settings`:
+   - Admin-configurable daily reward caps and coin limits.
+
+### Atomic Stored Procedures:
+- `ensure_user_demo_wallet(p_user_id)`:
+  Provisions wallet with exactly 200 demo coins starting balance once per account.
+- `execute_coin_transaction(p_user_id, p_amount, p_tx_type, p_reason, p_idempotency_key, p_ref_id)`:
+  Executes atomic debit/credit, enforces `balance_after >= 0`, verifies idempotency, updates `total_earned`/`total_spent`, and appends an auditable ledger record.
+
+### Row Level Security (RLS) & Protection:
+- Direct client `UPDATE` or `DELETE` on `demo_coin_wallets` and `demo_coin_transactions` is strictly rejected by RLS.
+- Balance mutations occur strictly through trusted stored procedures or backend verification.
+- Users can read only their own wallet, transactions, claims, and referrals.
+- Public read is permitted only for game leaderboards and aggregated scores.
+
+
 

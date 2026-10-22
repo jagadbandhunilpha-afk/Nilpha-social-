@@ -15,6 +15,8 @@ import {
   Settings,
   HelpCircle,
   LogIn,
+  Gift,
+  Trophy,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -37,6 +39,8 @@ export const Sidebar: React.FC = () => {
     { path: '/communities', label: t('navCommunities'), icon: Users },
     { path: '/friends', label: t('navFriends'), icon: UserCheck },
     { path: '/games', label: t('navGames'), icon: Gamepad2 },
+    { path: '/rewards', label: 'রিওয়ার্ড ও চ্যালেঞ্জ', icon: Gift },
+    { path: '/leaderboard', label: 'লিডারবোর্ড', icon: Trophy },
     { path: '/messages', label: t('navMessages'), icon: MessageSquare },
     { path: '/notifications', label: t('navNotifications'), icon: Bell, badge: 3 },
     { path: '/bookmarks', label: t('navBookmarks'), icon: Bookmark },

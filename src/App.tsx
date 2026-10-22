@@ -29,6 +29,11 @@ import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage';
 
+// Part 6: Games Hub, Demo Coins Wallet, Rewards, Referrals, Leaderboards
+import { RewardsPage } from './pages/RewardsPage';
+import { ReferralsPage } from './pages/ReferralsPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
+
 // Part 3: Feed & Detail Pages
 import { BookmarksPage } from './pages/BookmarksPage';
 import { PostDetailPage } from './pages/PostDetailPage';
@@ -56,6 +61,11 @@ export default function App() {
                   <Route path="/videos" element={<VideosPage />} />
                   <Route path="/communities" element={<CommunitiesPage />} />
                   <Route path="/games" element={<GamesPage />} />
+                  <Route path="/games/:gameId" element={<GamesPage />} />
+                  <Route path="/rewards" element={<RewardsPage />} />
+                  <Route path="/referrals" element={<ReferralsPage />} />
+                  <Route path="/leaderboard" element={<LeaderboardPage />} />
+                  <Route path="/achievements" element={<LeaderboardPage />} />
                   <Route path="/messages" element={<MessagesPage />} />
                   <Route path="/messages/:conversationId" element={<MessagesPage />} />
                   <Route path="/live" element={<LiveStreamPage />} />

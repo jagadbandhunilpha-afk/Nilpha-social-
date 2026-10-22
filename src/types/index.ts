@@ -437,3 +437,191 @@ export interface StreamModerationAction {
   created_at: string;
 }
 
+// ============================================================================
+// Part 6: Demo Coin Wallet & Ledger Types
+// ============================================================================
+export interface DemoCoinWallet {
+  id: string;
+  user_id: string;
+  balance: number;
+  total_earned: number;
+  total_spent: number;
+  is_initial_granted: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export type CoinTransactionType =
+  | 'initial_grant'
+  | 'game_reward'
+  | 'game_entry'
+  | 'daily_checkin'
+  | 'challenge_reward'
+  | 'referral_reward'
+  | 'referral_bonus'
+  | 'achievement_reward'
+  | 'game_play_debit'
+  | 'item_unlock_debit'
+  | 'admin_adjustment';
+
+export interface CoinTransaction {
+  id: string;
+  wallet_id: string;
+  user_id: string;
+  amount: number;
+  balance_after: number;
+  transaction_type: CoinTransactionType;
+  reason: string;
+  reference_id?: string | null;
+  idempotency_key: string;
+  created_at: string;
+}
+
+// ============================================================================
+// Part 6: Game Session & Leaderboard Types
+// ============================================================================
+export type MiniGameId =
+  | 'car-racing'
+  | 'bubble-puzzle'
+  | 'funny-runner'
+  | 'memory-match'
+  | 'tic-tac-toe'
+  | 'seven-up';
+
+export interface GameSessionRecord {
+  id: string;
+  user_id: string;
+  game_id: MiniGameId;
+  score: number;
+  duration_seconds: number;
+  coins_rewarded: number;
+  status: 'in_progress' | 'completed' | 'abandoned';
+  details?: Record<string, any>;
+  created_at: string;
+}
+
+export interface GameLeaderboardEntry {
+  user_id: string;
+  username: string;
+  display_name: string;
+  user_name?: string;
+  avatar_url?: string | null;
+  game_id: MiniGameId;
+  high_score: number;
+  total_sessions: number;
+  games_played?: number;
+  rank?: number;
+}
+
+// ============================================================================
+// Part 6: Daily Rewards & Challenges Types
+// ============================================================================
+export interface DailyCheckinStatus {
+  hasClaimedToday: boolean;
+  todayClaimed?: boolean;
+  currentStreak: number;
+  streakCount?: number;
+  nextRewardCoins: number;
+  currentDayNumber?: number;
+  lastClaimDate?: string | null;
+  streakDays: {
+    day: number;
+    coins: number;
+    isClaimed: boolean;
+    isToday: boolean;
+  }[];
+}
+
+export interface UserChallengeItem {
+  id: string;
+  user_id: string;
+  challenge_key: string;
+  title_bn: string;
+  title_en: string;
+  title?: string;
+  description?: string;
+  target_count: number;
+  target?: number;
+  current_count: number;
+  progress?: number;
+  reward_coins: number;
+  is_completed: boolean;
+  is_claimed: boolean;
+  claimed?: boolean;
+  period: 'daily' | 'weekly';
+  type?: string;
+  expires_at: string;
+  created_at: string;
+}
+
+// ============================================================================
+// Part 6: Referral System Types
+// ============================================================================
+export interface ReferralSummary {
+  referralCode: string;
+  code?: string;
+  referralUrl: string;
+  totalReferrals: number;
+  totalReferred?: number;
+  totalCoinsEarned: number;
+  totalBonusCoins?: number;
+  referralHistory: {
+    id: string;
+    referee_name: string;
+    referee_username: string;
+    status: 'verified' | 'pending';
+    reward_coins: number;
+    created_at: string;
+  }[];
+  referrals?: {
+    id: string;
+    referee_name?: string;
+    reward_coins: number;
+    created_at: string;
+  }[];
+}
+
+// ============================================================================
+// Part 6: Achievements System Types
+// ============================================================================
+export interface AchievementItem {
+  key: string;
+  id?: string;
+  title_bn: string;
+  title_en: string;
+  title?: string;
+  description_bn: string;
+  description_en: string;
+  description?: string;
+  icon: string;
+  reward_coins: number;
+  isUnlocked: boolean;
+  unlocked?: boolean;
+  progress?: number;
+  max_progress?: number;
+  unlockedAt?: string | null;
+}
+
+// ============================================================================
+// Part 6: Seven Up Demo Arena Types
+// ============================================================================
+export type SevenUpChoice = 'low' | 'seven' | 'high' | 'under7' | 'over7' | '7';
+
+export interface SevenUpRoundResult {
+  dice1: number;
+  dice2: number;
+  sum: number;
+  diceSum?: number;
+  choice: SevenUpChoice;
+  isWin: boolean;
+  wonCoins: number;
+  newBalance: number;
+  fairHash?: string;
+  payoutMultiplier?: number;
+  coinsBet?: number;
+  coinsWon?: number;
+  netCoins?: number;
+  randomProof?: string;
+}
+
+
