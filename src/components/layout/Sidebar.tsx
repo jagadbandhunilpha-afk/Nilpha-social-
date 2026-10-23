@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
   Home,
@@ -17,13 +17,36 @@ import {
   LogIn,
   Gift,
   Trophy,
+  Search,
+  ShieldCheck,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { notificationService } from '../../services/notificationService';
+import { adminService } from '../../services/adminService';
 
 export const Sidebar: React.FC = () => {
   const { t } = useLanguage();
   const { user, profile } = useAuth();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isStaff, setIsStaff] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      setIsStaff(false);
+      return;
+    }
+
+    notificationService.getUnreadCount(user.id).then(setUnreadCount);
+    adminService.hasModeratorAccess(user.id).then(setIsStaff);
+
+    const unsub = notificationService.subscribeToNotifications(user.id, () => {
+      notificationService.getUnreadCount(user.id).then(setUnreadCount);
+    });
+
+    return () => unsub();
+  }, [user]);
 
   const displayName = profile?.display_name || user?.user_metadata?.display_name || (user ? user.email?.split('@')[0] : t('displayNameDemo'));
   const username = profile?.username ? `@${profile.username}` : user?.user_metadata?.username ? `@${user.user_metadata.username}` : (user ? `@${user.email?.split('@')[0]}` : t('usernameDemo'));
@@ -34,6 +57,7 @@ export const Sidebar: React.FC = () => {
 
   const mainNavLinks = [
     { path: '/', label: t('navHome'), icon: Home },
+    { path: '/search', label: 'অনুসন্ধান', icon: Search },
     { path: '/videos', label: t('navVideos'), icon: Tv },
     { path: '/live', label: t('navLive'), icon: Radio },
     { path: '/communities', label: t('navCommunities'), icon: Users },
@@ -42,13 +66,19 @@ export const Sidebar: React.FC = () => {
     { path: '/rewards', label: 'রিওয়ার্ড ও চ্যালেঞ্জ', icon: Gift },
     { path: '/leaderboard', label: 'লিডারবোর্ড', icon: Trophy },
     { path: '/messages', label: t('navMessages'), icon: MessageSquare },
-    { path: '/notifications', label: t('navNotifications'), icon: Bell, badge: 3 },
+    {
+      path: '/notifications',
+      label: t('navNotifications'),
+      icon: Bell,
+      badge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : unreadCount) : undefined,
+    },
     { path: '/bookmarks', label: t('navBookmarks'), icon: Bookmark },
     { path: '/wallet', label: t('navWallet'), icon: Wallet },
     { path: '/profile', label: t('navProfile'), icon: User },
   ];
 
   const secondaryNavLinks = [
+    ...(isStaff ? [{ path: '/admin', label: 'অ্যাডমিন ড্যাশবোর্ড', icon: ShieldCheck, highlight: true }] : []),
     { path: '/settings', label: t('navSettings'), icon: Settings },
     { path: '/help', label: t('navHelp'), icon: HelpCircle },
   ];

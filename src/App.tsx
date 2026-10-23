@@ -46,6 +46,10 @@ import { CallProvider } from './context/CallContext';
 import { LiveStreamPage } from './pages/LiveStreamPage';
 import { LiveWatchPage } from './pages/LiveWatchPage';
 
+// Part 7: Search & Admin Dashboard
+import { SearchPage } from './pages/SearchPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -71,6 +75,8 @@ export default function App() {
                   <Route path="/live" element={<LiveStreamPage />} />
                   <Route path="/live/:streamId" element={<LiveWatchPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/admin" element={<AdminDashboardPage />} />
                   <Route path="/wallet" element={<WalletPage />} />
                   <Route path="/friends" element={<FriendsPage />} />
                   <Route path="/profile" element={<ProfilePage />} />

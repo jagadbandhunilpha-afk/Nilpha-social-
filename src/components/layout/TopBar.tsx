@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, X, Bell, MessageSquare, Compass, Shield, User, LogIn, LogOut, UserPlus, Bookmark, Users, Radio } from 'lucide-react';
+import { Search, X, Bell, MessageSquare, Compass, Shield, User, LogIn, LogOut, UserPlus, Bookmark, Users, Radio, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import { useNotice } from '../../context/NoticeContext';
+import { notificationService } from '../../services/notificationService';
+import { adminService } from '../../services/adminService';
 
 export const TopBar: React.FC = () => {
   const { t } = useLanguage();
@@ -15,6 +17,29 @@ export const TopBar: React.FC = () => {
   const { showToast } = useNotice();
   const [searchQuery, setSearchQuery] = useState('');
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isStaff, setIsStaff] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      setIsStaff(false);
+      return;
+    }
+
+    // Load unread count
+    notificationService.getUnreadCount(user.id).then(setUnreadCount);
+
+    // Check staff permissions
+    adminService.hasModeratorAccess(user.id).then(setIsStaff);
+
+    // Subscribe to real-time notification events
+    const unsub = notificationService.subscribeToNotifications(user.id, () => {
+      notificationService.getUnreadCount(user.id).then(setUnreadCount);
+    });
+
+    return () => unsub();
+  }, [user]);
 
   const displayName = profile?.display_name || user?.user_metadata?.display_name || (user ? user.email?.split('@')[0] : t('displayNameDemo'));
   const username = profile?.username ? `@${profile.username}` : user?.user_metadata?.username ? `@${user.user_metadata.username}` : (user ? `@${user.email?.split('@')[0]}` : t('usernameDemo'));
@@ -26,9 +51,7 @@ export const TopBar: React.FC = () => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      if (location.pathname !== '/' && location.pathname !== '/videos') {
-        navigate(`/?q=${encodeURIComponent(searchQuery)}`);
-      }
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -116,7 +139,11 @@ export const TopBar: React.FC = () => {
             }`}
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#EF4444]" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#EF4444] text-white text-[10px] font-black flex items-center justify-center ring-2 ring-white dark:ring-[#151D2C]">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
 
           <LanguageSelector compact />
@@ -216,6 +243,17 @@ export const TopBar: React.FC = () => {
                     <Shield className="w-4 h-4 text-slate-400" />
                     <span>{t('navSettings')}</span>
                   </Link>
+
+                  {isStaff && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setAccountMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2 text-[#155EEF] dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-[#155EEF] dark:text-blue-400" />
+                      <span>অ্যাডমিন প্যানেল</span>
+                    </Link>
+                  )}
 
                   <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
 

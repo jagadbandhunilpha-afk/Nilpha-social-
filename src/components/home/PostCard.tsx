@@ -19,7 +19,7 @@ import { useNotice } from '../../context/NoticeContext';
 import { togglePostLike, toggleBookmark, deletePost } from '../../services/feedService';
 import { MediaRenderer } from '../feed/MediaRenderer';
 import { CommentSection } from '../feed/CommentSection';
-import { ReportDialog } from '../feed/ReportDialog';
+import { ReportDialog } from '../reporting/ReportDialog';
 
 interface PostCardProps {
   post: Post;
@@ -359,8 +359,15 @@ export const PostCard: React.FC<PostCardProps> = ({
       <ReportDialog
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
-        postId={post.id}
-        targetTitle={post.content.slice(0, 40)}
+        targetType="post"
+        targetId={post.id}
+        reportedUserId={post.author?.id}
+        targetPreview={{
+          title: post.content.slice(0, 40),
+          content: post.content,
+          author_name: post.author?.name,
+          author_username: post.author?.handle,
+        }}
       />
     </article>
   );

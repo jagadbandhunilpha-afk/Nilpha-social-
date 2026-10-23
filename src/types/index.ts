@@ -132,8 +132,9 @@ export interface UserProfile {
   bio?: string | null;
   avatar_url?: string | null;
   preferred_language: 'bn' | 'en';
-  account_status: 'active' | 'suspended' | 'pending';
+  account_status: 'active' | 'suspended' | 'pending' | 'banned';
   verification_status: 'none' | 'pending' | 'verified';
+  role?: AppRole;
   created_at: string;
   updated_at: string;
 }
@@ -623,5 +624,197 @@ export interface SevenUpRoundResult {
   netCoins?: number;
   randomProof?: string;
 }
+
+// ============================================================================
+// Part 7: Notifications Center Types
+// ============================================================================
+export type NotificationType =
+  | 'friend_request'
+  | 'friend_accepted'
+  | 'follow'
+  | 'post_like'
+  | 'post_comment'
+  | 'comment_reply'
+  | 'mention'
+  | 'group_invite'
+  | 'group_decision'
+  | 'page_invite'
+  | 'message'
+  | 'missed_call'
+  | 'live_stream'
+  | 'challenge_completed'
+  | 'reward_eligible'
+  | 'referral_milestone'
+  | 'security_alert';
+
+export interface AppNotification {
+  id: string;
+  recipient_id: string;
+  actor_id?: string | null;
+  actor_name?: string;
+  actor_username?: string;
+  actor_avatar?: string | null;
+  notification_type: NotificationType;
+  title: string;
+  body?: string | null;
+  entity_type?: 'post' | 'profile' | 'group' | 'page' | 'conversation' | 'live_stream' | 'reward' | null;
+  entity_id?: string | null;
+  action_url?: string | null;
+  read_at?: string | null;
+  is_read: boolean;
+  is_dismissed?: boolean;
+  event_id?: string | null;
+  created_at: string;
+}
+
+export interface NotificationPreferences {
+  user_id: string;
+  friend_requests: boolean;
+  likes_comments: boolean;
+  mentions_tags: boolean;
+  messages: boolean;
+  groups_pages: boolean;
+  calls_live: boolean;
+  rewards_challenges: boolean;
+  security_alerts: boolean;
+  updated_at?: string;
+}
+
+// ============================================================================
+// Part 7: Global Search Types
+// ============================================================================
+export type SearchCategory = 'all' | 'users' | 'posts' | 'groups' | 'pages' | 'live';
+
+export interface GlobalSearchResultItem {
+  id: string;
+  type: 'user' | 'post' | 'group' | 'page' | 'live';
+  title: string;
+  subtitle?: string;
+  avatar_url?: string | null;
+  description?: string;
+  action_url: string;
+  metadata?: Record<string, any>;
+}
+
+export interface GlobalSearchResults {
+  query: string;
+  users: GlobalSearchResultItem[];
+  posts: GlobalSearchResultItem[];
+  groups: GlobalSearchResultItem[];
+  pages: GlobalSearchResultItem[];
+  liveStreams: GlobalSearchResultItem[];
+  totalCount: number;
+}
+
+// ============================================================================
+// Part 7: Reporting & Moderation Types
+// ============================================================================
+export type ReportTargetType =
+  | 'post'
+  | 'comment'
+  | 'profile'
+  | 'message'
+  | 'group'
+  | 'page'
+  | 'stream'
+  | 'stream_comment';
+
+export type ReportReasonCategory =
+  | 'spam'
+  | 'harassment'
+  | 'hate_speech'
+  | 'violence_threats'
+  | 'impersonation'
+  | 'misinformation'
+  | 'copyright'
+  | 'inappropriate'
+  | 'other';
+
+export type ReportStatus = 'pending' | 'under_review' | 'reviewed' | 'resolved' | 'dismissed';
+
+export interface ModerationReport {
+  id: string;
+  reporter_id: string;
+  reporter_name?: string;
+  reporter_username?: string;
+  target_type: ReportTargetType;
+  target_id: string;
+  reported_user_id?: string | null;
+  reported_user_name?: string;
+  reason: ReportReasonCategory;
+  reason_category?: ReportReasonCategory;
+  details?: string | null;
+  status: ReportStatus;
+  moderator_id?: string | null;
+  moderator_name?: string;
+  moderation_notes?: string | null;
+  action_taken?: string | null;
+  target_preview?: {
+    title?: string;
+    content?: string;
+    author_name?: string;
+    author_username?: string;
+  };
+  created_at: string;
+  reviewed_at?: string | null;
+}
+
+export type ModerationActionType =
+  | 'warning'
+  | 'remove_content'
+  | 'delete_content'
+  | 'hide_content'
+  | 'suspend_user'
+  | 'ban_user'
+  | 'restore_content'
+  | 'restore_user'
+  | 'dismiss_report'
+  | 'resolve_report'
+  | 'mark_reviewed';
+
+// ============================================================================
+// Part 7: RBAC, Admin Dashboard & Audit Logs
+// ============================================================================
+export type AppRole = 'user' | 'moderator' | 'admin' | 'super_admin';
+
+export interface AdminAuditLog {
+  id: string;
+  actor_id: string;
+  actor_name?: string;
+  actor_username?: string;
+  action_type: string;
+  target_type: string;
+  target_id?: string | null;
+  reason: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+}
+
+export interface AdminDashboardMetrics {
+  totalUsers: number;
+  newUsersThisWeek: number;
+  activeUsers24h: number;
+  totalPosts: number;
+  newPostsThisWeek: number;
+  totalGroups: number;
+  totalPages: number;
+  totalLiveStreams: number;
+  pendingReports: number;
+  resolvedReports: number;
+  totalGameSessions: number;
+  totalCoinsCirculated: number;
+  totalCoinsCirculating?: number;
+}
+
+export interface SystemSettingItem {
+  key: string;
+  setting_key?: string;
+  value: any;
+  setting_value?: any;
+  description?: string;
+  updated_by?: string | null;
+  updated_at: string;
+}
+
 
 

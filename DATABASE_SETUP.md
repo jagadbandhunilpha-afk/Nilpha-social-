@@ -372,5 +372,68 @@ The Part 6 database migration is located at:
 - Users can read only their own wallet, transactions, claims, and referrals.
 - Public read is permitted only for game leaderboards and aggregated scores.
 
+---
+
+## 11. Part 7 Database Architecture: Notifications, Global Search, Reporting, Moderation & Admin Dashboard
+
+The Part 7 migration script is located at:
+`supabase/migrations/20261023000000_create_notifications_search_moderation_admin_tables.sql`
+
+It provisions:
+
+### 1. `public.user_roles` (RBAC)
+- `id` (UUID Primary Key)
+- `user_id` (UUID references `public.profiles(id)` UNIQUE)
+- `role` ('user' | 'moderator' | 'admin' | 'super_admin')
+- `granted_by` (UUID references `public.profiles(id)`)
+- `granted_at` (TIMESTAMPTZ)
+- Helper functions: `check_user_is_admin(user_uuid)` and `check_user_is_moderator_or_admin(user_uuid)`.
+- **RLS**: Users can read their own role. Administrators can view and update user roles.
+
+### 2. `public.notifications`
+- `id` (UUID Primary Key)
+- `recipient_id` (UUID references `public.profiles(id)`)
+- `actor_id` (UUID references `public.profiles(id)`)
+- `notification_type` ('friend_request', 'friend_accept', 'follow', 'post_like', 'comment', 'mention', 'group_invite', 'message', 'call_missed', 'live_stream', 'reward_claimed', 'security_alert')
+- `title`, `body` (TEXT)
+- `entity_type` ('post', 'profile', 'group', 'page', 'conversation', 'stream', 'wallet')
+- `entity_id` (TEXT)
+- `action_url` (TEXT)
+- `read_at` (TIMESTAMPTZ, NULL if unread)
+- `is_dismissed` (BOOLEAN)
+- `event_id` (TEXT UNIQUE for event deduplication & idempotency)
+- `created_at` (TIMESTAMPTZ)
+- **RLS**: Strict isolation. Users can select and update read/dismissed flags ONLY for rows where `auth.uid() = recipient_id`. Direct client inserts for other users are forbidden.
+
+### 3. `public.notification_preferences`
+- `user_id` (UUID references `public.profiles(id)` PRIMARY KEY)
+- Category toggles: `social_alerts`, `messages_calls`, `groups_pages`, `rewards_games`, `system_security`, `email_digest`
+- **RLS**: User-exclusive read and update (`auth.uid() = user_id`).
+
+### 4. `public.reports` (Comprehensive Moderation Queue)
+- Extended columns: `target_type` ('post', 'comment', 'profile', 'message', 'group', 'page', 'stream'), `target_id`, `reported_user_id`, `reason_category`, `details`, `status` ('pending', 'reviewed', 'resolved', 'dismissed'), `action_taken`, `moderator_notes`, `reviewed_by`, `reviewed_at`.
+- **Reporter Anonymity**: RLS ensures regular users can view only reports they submitted (`auth.uid() = reporter_id`). Reported parties can never see who reported them or access the reporter's ID.
+- **Moderator Access**: Moderators and admins have full review and update permissions.
+
+### 5. `public.admin_audit_logs` (Immutable Audit Trail)
+- `id` (UUID Primary Key)
+- `actor_id` (UUID references `public.profiles(id)`)
+- `action_type` ('report_review', 'content_delete', 'user_suspend', 'user_ban', 'role_change', 'system_setting_update')
+- `target_type`, `target_id`
+- `reason` (TEXT)
+- `metadata` (JSONB)
+- `ip_address` (TEXT)
+- `created_at` (TIMESTAMPTZ)
+- **Security**: Append-only. RLS prohibits UPDATE and DELETE actions for all users (including admins). Only moderators and admins can read audit logs.
+
+### 6. `public.system_settings`
+- Key-value platform settings with admin update privileges.
+- Pre-seeded with maintenance mode, open registration, max upload size, and daily demo coin reward caps.
+
+### 7. Trigram GIN Search Indexes
+- Enabled `pg_trgm` extension.
+- Added GIN trigram indexes on `profiles(username, display_name)`, `posts(content)`, `groups(name, description)`, and `pages(name, description)` for fast fuzzy global search in Bengali and English.
+
+
 
 
