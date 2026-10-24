@@ -434,6 +434,23 @@ It provisions:
 - Enabled `pg_trgm` extension.
 - Added GIN trigram indexes on `profiles(username, display_name)`, `posts(content)`, `groups(name, description)`, and `pages(name, description)` for fast fuzzy global search in Bengali and English.
 
+---
 
+## 11. Part 8 Migration: Security Hardening, Search Paths, and High-Throughput Indexes
 
+The migration script is located at:
+`supabase/migrations/20261024000000_part8_security_hardening_and_indexes.sql`
 
+It provisions:
+1. **Search Path Hardening**: Applies `SET search_path = public, pg_temp;` across all `SECURITY DEFINER` functions, preventing PostgreSQL search-path poisoning attacks.
+2. **Coin Transaction Authorization**: Hardens `execute_coin_transaction` by asserting `auth.uid() = p_user_id` or verifying admin privileges.
+3. **Audit Log Immutability**: Implements `prevent_audit_log_mutation()` trigger forbidding any `UPDATE` or `DELETE` operations on `audit_logs` and `admin_audit_logs`.
+4. **Account Suspension Constraint**: Updates `profiles_account_status_check` constraint to support `'banned'`.
+5. **GDPR/Privacy Account Deletion**: Creates stored procedure `public.request_account_deletion` which cleans personal records while keeping financial audit ledgers intact.
+6. **High-Throughput Composite Indexes**:
+   - `idx_posts_user_created`: `posts(user_id, created_at DESC)`
+   - `idx_comments_post_created`: `comments(post_id, created_at ASC)`
+   - `idx_messages_conversation_created`: `messages(conversation_id, created_at ASC)`
+   - `idx_notifications_user_unread`: `notifications(recipient_id, read_at, created_at DESC)`
+   - `idx_user_blocks_composite`: `user_blocks(blocker_id, blocked_id)`
+   - `idx_friendships_user_status`: `friendships(user_id, status)`

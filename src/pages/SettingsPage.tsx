@@ -26,6 +26,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNotice } from '../context/NoticeContext';
 import { useAuth } from '../context/AuthContext';
+import { accountService } from '../services/accountService';
 
 export const SettingsPage: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
@@ -44,6 +45,16 @@ export const SettingsPage: React.FC = () => {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
+  // Account Deactivation & Deletion states (Part 8)
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivateReason, setDeactivateReason] = useState('');
+  const [deactivateLoading, setDeactivateLoading] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const handlePlaceholderToggle = (sectionName: string) => {
     openNotice(
       sectionName,
@@ -56,6 +67,37 @@ export const SettingsPage: React.FC = () => {
     await signOut();
     showToast(t('logoutSuccess'));
     navigate('/login');
+  };
+
+  const handleDeactivateAccount = async () => {
+    if (!user) return;
+    setDeactivateLoading(true);
+    const res = await accountService.deactivateAccount(user.id, deactivateReason);
+    setDeactivateLoading(false);
+    if (res.success) {
+      showToast(res.message);
+      setShowDeactivateModal(false);
+      await signOut();
+      navigate('/login');
+    } else {
+      showToast(res.message || 'নিষ্ক্রিয় করতে ব্যর্থ হয়েছে');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setDeleteError(null);
+    setDeleteLoading(true);
+    const res = await accountService.deleteAccount(user.id, deleteConfirmText);
+    setDeleteLoading(false);
+    if (res.success) {
+      showToast(res.message);
+      setShowDeleteModal(false);
+      await signOut();
+      navigate('/login');
+    } else {
+      setDeleteError(res.message);
+    }
   };
 
   const handleChangePasswordSubmit = async (e: React.FormEvent) => {
@@ -218,23 +260,35 @@ export const SettingsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Logout Button */}
-              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              {/* Account Actions & Danger Zone */}
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   onClick={handleLogout}
-                  className="py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors text-xs sm:text-sm font-semibold flex items-center justify-center gap-2"
+                  className="py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors text-xs sm:text-sm font-semibold flex items-center justify-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>{t('logout')}</span>
                 </button>
 
-                <button
-                  onClick={handleDeleteAccountNotice}
-                  className="py-2 px-3 text-xs text-slate-400 hover:text-red-600 flex items-center justify-center gap-1.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>{t('deleteAccount')}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowDeactivateModal(true)}
+                    className="py-2 px-3 rounded-lg text-xs text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium transition-colors"
+                  >
+                    নিষ্ক্রিয় করুন
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteConfirmText('');
+                      setDeleteError(null);
+                      setShowDeleteModal(true);
+                    }}
+                    className="py-2 px-3 rounded-lg text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-700 flex items-center gap-1.5 font-medium transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>{t('deleteAccount')}</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -523,6 +577,104 @@ export const SettingsPage: React.FC = () => {
           </Link>
         </section>
       </div>
+
+      {/* Account Deactivation Modal */}
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="w-full max-w-md bg-white dark:bg-[#151D2C] rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+              অ্যাকাউন্ট সাময়িক নিষ্ক্রিয়করণ
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">
+              অ্যাকাউন্ট নিষ্ক্রিয় করলে আপনার প্রোফাইল ও পোস্ট সাময়িকভাবে লুকানো থাকবে। আপনি পরবর্তীতে পুনরায় লগইন করে সক্রিয় করতে পারবেন।
+            </p>
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                নিষ্ক্রিয়করণের কারণ (ঐচ্ছিক)
+              </label>
+              <textarea
+                value={deactivateReason}
+                onChange={(e) => setDeactivateReason(e.target.value)}
+                placeholder="একটি কারণ উল্লেখ করুন..."
+                rows={3}
+                className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:border-amber-500"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={deactivateLoading}
+                onClick={() => setShowDeactivateModal(false)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                disabled={deactivateLoading}
+                onClick={handleDeactivateAccount}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5"
+              >
+                {deactivateLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>নিষ্ক্রিয় নিশ্চিত করুন</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Deletion Modal (Permanent) */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="w-full max-w-md bg-white dark:bg-[#151D2C] rounded-2xl border border-red-200 dark:border-red-900/60 p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-3 text-red-600 dark:text-red-400">
+              <ShieldAlert className="w-6 h-6" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                স্থায়ী অ্যাকাউন্ট মুছে ফেলা
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+              সতর্কতা: এটি একটি অপরিবর্তনীয় পদক্ষেপ। আপনার সমস্ত ব্যক্তিগত তথ্য, পোস্ট, বন্ধুত্ব এবং বার্তা সম্পূর্ণরূপে মুছে বা অ্যানোনিমাস করা হবে। আর্থিক অডিট সম্মতি নিশ্চিত করতে ডেমো কয়েন লেজার রেকর্ড অপরিবর্তিত থাকবে।
+            </p>
+            {deleteError && (
+              <p className="text-xs text-red-600 dark:text-red-400 mb-3 p-2 rounded-lg bg-red-50 dark:bg-red-950/40">
+                {deleteError}
+              </p>
+            )}
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                নিশ্চিত করতে নিচে <span className="font-mono font-bold text-red-500">DELETE</span> লিখুন:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full px-3 py-2 text-xs font-mono bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:border-red-500"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading || deleteConfirmText.trim() !== 'DELETE'}
+                onClick={handleDeleteAccount}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white flex items-center gap-1.5"
+              >
+                {deleteLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>স্থায়ীভাবে মুছুন</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
